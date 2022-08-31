@@ -80,7 +80,8 @@ describe('App e2e', () => {
           .spec()
           .post('/auth/signin')
           .withBody(dto)
-          .expectStatus(HttpStatus.OK);
+          .expectStatus(HttpStatus.OK)
+          .stores('userAt', 'access_token');
       });
       it('Should throw error if email is empty', () => {
         return pactum
@@ -108,7 +109,15 @@ describe('App e2e', () => {
 
   describe('Users', () => {
     describe('Get me', () => {
-      it('Should get user info', () => {});
+      it('Should get user info', () => {
+        return pactum
+          .spec()
+          .get('/users/me')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectStatus(HttpStatus.OK);
+      });
     });
     describe('Edit user', () => {});
   });
@@ -118,10 +127,10 @@ describe('App e2e', () => {
 
     describe('Create bookmark', () => {});
 
-    describe('Edit bookmark', () => {});
+    describe('Edit bookmark by id', () => {});
 
     describe('Get bookmark by id', () => {});
 
-    describe('Delete bookmark', () => {});
+    describe('Delete bookmark by id', () => {});
   });
 });
