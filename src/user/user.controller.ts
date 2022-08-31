@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
