@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
@@ -14,4 +15,7 @@ export class UserController {
   getMe(@GetUser() user: User) {
     return user;
   }
+
+  @Patch('edit')
+  editUser() {}
 }
