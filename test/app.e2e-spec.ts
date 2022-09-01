@@ -8,7 +8,12 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { AppModule } from '../src/app.module';
 import * as pactum from 'pactum';
 import { AuthDto } from '../src/auth/dto';
-import { User } from '@prisma/client';
+
+import { EditUserDto } from 'src/user/dto';
+import {
+  CreateBookmarkDto,
+  EditBookmarkDto,
+} from 'src/bookmark/dto';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -116,21 +121,130 @@ describe('App e2e', () => {
           .withHeaders({
             Authorization: 'Bearer $S{userAt}',
           })
+          .stores('userId', 'id')
           .expectStatus(HttpStatus.OK);
       });
     });
-    describe('Edit user', () => {});
+    describe('Edit user', () => {
+      const dto: EditUserDto = {
+        email: 'adem@mail.com',
+        firstName: 'Adem',
+      };
+      it('Should edit user info', () => {
+        return pactum
+          .spec()
+          .patch('/users/edit')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .withBody(dto)
+          .expectBodyContains(dto.firstName)
+          .expectBodyContains(dto.email)
+          .expectStatus(HttpStatus.OK);
+      });
+    });
   });
-
   describe('Bookmarks', () => {
-    describe('Get bookmarks', () => {});
+    describe('Get empty bookmarks', () => {
+      it('Should return empty body', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectBody([])
+          .expectStatus(HttpStatus.OK);
+      });
+    });
 
-    describe('Create bookmark', () => {});
+    describe('Create bookmark', () => {
+      const dto: CreateBookmarkDto = {
+        title: 'first bookmark',
+        link: 'www.google.com',
+      };
+      it('Should create a bookmark', () => {
+        return pactum
+          .spec()
+          .post('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .stores('bookmarkAt', 'id')
+          .withBody(dto)
+          .expectStatus(HttpStatus.CREATED);
+      });
+    });
 
-    describe('Edit bookmark by id', () => {});
+    describe('Get bookmark by id', () => {
+      it('Should get a bookmark', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmarkAt}')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectStatus(HttpStatus.OK)
+          .expectBodyContains('$S{bookmarkAt}');
+      });
+    });
 
-    describe('Get bookmark by id', () => {});
+    describe('Get all bookmarks after creating one', () => {
+      it('Should return 1 bookmark', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectJsonLength(1)
+          .expectStatus(HttpStatus.OK);
+      });
+    });
 
-    describe('Delete bookmark by id', () => {});
+    describe('Edit bookmark by id', () => {
+      it('Should edit bookmark', () => {
+        const dto: EditBookmarkDto = {
+          title: 'Edit title',
+          description: 'Just a google page',
+        };
+        return pactum
+          .spec()
+          .patch('/bookmarks/$S{bookmarkAt}')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .withBody(dto)
+          .expectBodyContains(dto.title)
+          .expectBodyContains(dto.description)
+          .expectStatus(HttpStatus.OK);
+      });
+    });
+
+    describe('Delete bookmark by id', () => {
+      it('Delete the bookmark by id', () => {
+        return pactum
+          .spec()
+          .delete('/bookmarks/{id}')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .withPathParams('id', '$S{bookmarkAt}')
+          .inspect()
+          .expectStatus(HttpStatus.NO_CONTENT);
+      });
+
+      it('Should return empty body after deleting', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectBody([])
+          .expectStatus(HttpStatus.OK);
+      });
+    });
   });
 });
